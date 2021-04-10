@@ -8,6 +8,8 @@ kivy.require('1.9.0')
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.label import Label
+from kivy.core.audio import SoundLoader
+
 import random
 
 class Bubble:
@@ -48,6 +50,16 @@ class BubbleSystem:
         # Queue of bubbles to make from a burst
         self.create_queue = []
 
+        self.pop_sounds = [
+            SoundLoader.load("pop.wav"),
+            SoundLoader.load("pop2.wav"),
+            SoundLoader.load("pop3.wav"),
+            SoundLoader.load("pop4.wav")
+        ]
+
+    def make_pop(self):
+        random.choice(self.pop_sounds).play()
+
     def resize(self, size):
         self.width, self.height = size
 
@@ -70,7 +82,7 @@ class BubbleSystem:
                 new_bubble = Bubble(self.width, self.height)
             self.bubbles.append(new_bubble)
         if self.pressed != [None, None]:
-            print(repr(self.pressed))
+            # print(repr(self.pressed))
             press_coords = list(self.pressed)
             self.pressed = [None, None]
         else:
@@ -80,11 +92,13 @@ class BubbleSystem:
             # bubbles die at the top, or outside the canvas
             if bubble.y < 0 or bubble.y >= self.height or bubble.x > self.width:
                 self.bubbles.remove(bubble)
+                self.make_pop()
                 continue
             # Decrement bubble lifetime
             bubble.lifetime -= 1
             if bubble.lifetime <= 0:
                 # burst!
+                self.make_pop()
                 self.create_queue.extend(bubble.burst())
                 self.bubbles.remove(bubble)
                 continue
@@ -93,6 +107,7 @@ class BubbleSystem:
                     and (bubble.y + bubble.drawsize >= press_coords[1] >= bubble.y):
                     # burst!
                     self.create_queue.extend(bubble.burst())
+                    self.make_pop()
                     self.bubbles.remove(bubble)
                     continue
             bubble.y += bubble.speed
